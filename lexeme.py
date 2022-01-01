@@ -99,38 +99,43 @@ def main(args=None):
     print(f"You have {args.guesses} to get it right.")
     if not args.nonsense:
         print(f"All your guesses must be words that I know!")
+    print()
 
     guesses = []
     stats_so_far = {l: StatColors.Unknown for l in LETTERS}
     while len(guesses) < args.guesses:
         # Ask for next guess
-        print()
-        while True:
-            guess = input("Your guess? ").strip().upper()
-            if len(guess) != args.length or any(c not in LETTERS for c in guess):
-                print(f"Must be a word consisting of exactly {args.length} letters. Try again.")
-            elif not args.nonsense and guess not in words:
-                print(f"Hmmm, I don't know the word {guess}. Try again.")
-            else:
-                break
+        print(f"Letters: {colored_letters(stats_so_far)}")
+        try:
+            while True:
+                guess = input("Your guess? ").strip().upper()
+                if len(guess) != args.length or any(c not in LETTERS for c in guess):
+                    print(f"Must be a word consisting of exactly {args.length} letters. Try again.")
+                elif not args.nonsense and guess not in words:
+                    print(f"Hmmm, I don't know the word {guess}. Try again.")
+                else:
+                    break
+        except KeyboardInterrupt:
+            print()
+            print("Interrupted, giving up...")
+            break
 
         # Update stats with guess
         update_stats_from_guess(stats_so_far, guess, target)
         guesses.append(guess)
 
         # Show guesses so far
-        for ii, guess in enumerate(guesses, 1):
-            print(f"Guess {ii}: {colored_guess(guess, target)}")
+        print()
+        for ii, g in enumerate(guesses, 1):
+            print(f"Guess {ii}: {colored_guess(g, target)}")
+        print()
 
-        # Show overall letter status
-        print()
         if guess == target:
-            print(f"Correct! {colored_guess(target, target)}")
             break
-        else:
-            print(f"Overall: {colored_letters(stats_so_far)}")
+
+    if guesses and guesses[-1] == target:
+        print(f"Correct! {colored_guess(target, target)}")
     else:
-        print()
         print(f"Sorry, the correct word was: {colored_guess(target, target)}")
 
 
