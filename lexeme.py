@@ -30,19 +30,30 @@ def colored_letters(stats):
     return result + colorama.Style.RESET_ALL
 
 
-def colored_guess(guess, target):
-    result = ''
+def stats_of_guess(guess, target):
+    stats = []
+    leftovers = []
+
+    # Two-pass so that we don't overcount WrongPos.
+    # https://twitter.com/moxfyre/status/1477321560927129604
     for gl, tl in zip(guess, target):
         if gl == tl:
-            result += StatColors.RightPosition.value
-        elif gl in target:
-            # FIXME: It's more complex than this. https://twitter.com/moxfyre/status/1477321560927129604
-            result += StatColors.WrongPosition.value
+            stats.append(StatColors.RightPosition)
         else:
-            result += StatColors.Absent.value
-        result += gl
+            stats.append(StatColors.Absent)
+            leftovers.append(tl)
+    for ii, (gl, tl) in enumerate(zip(guess, target)):
+        if gl == tl:
+            pass  # Don't change
+        elif gl in leftovers:
+            leftovers.remove(gl)
+            stats[ii] = StatColors.WrongPosition
 
-    return result + colorama.Style.RESET_ALL
+    return stats
+
+
+def colored_guess(guess, target):
+    return ''.join(s.value + l for s, l in zip(stats_of_guess(guess, target), guess)) + colorama.Style.RESET_ALL
 
 
 def eligible_words(df, length):
