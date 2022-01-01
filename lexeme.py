@@ -86,6 +86,7 @@ def parse_args(args=None):
                    help='Length of word to guess')
     p.add_argument('-n', '--nonsense', action='store_true',
                    help='Allow nonsense guesses. (Default is to only allow known words.)')
+    p.add_argument('--test', help=argparse.SUPPRESS)
     args = p.parse_args(args)
     return p, args
 
@@ -94,9 +95,15 @@ def main(args=None):
     p, args = parse_args(args)
 
     words = list(eligible_words(args.dict, args.length))
-    target = random.choice(words)
-    print(f"I've chosen a {args.length}-letter word from {len(words)} possibilities.")
-    print(f"You have {args.guesses} to get it right.")
+    if args.test:
+        target = args.test.strip().upper()
+        if target not in words:
+            p.error(f"Need a known {args.length}-letter word to test, not {target!r}")
+        print(f"I've chosen the word {target} which you specified to test with!")
+    else:
+        target = random.choice(words)
+        print(f"I've chosen a {args.length}-letter word from {len(words)} possibilities.")
+    print(f"You have {args.guesses} guesses to guess it correctly.")
     if not args.nonsense:
         print(f"All your guesses must be words that I know!")
     print()
