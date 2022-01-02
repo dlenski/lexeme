@@ -7,6 +7,7 @@ Python program to play a word-guessing game like
 - Option for varying the word length (`-l`, `--length`) or number of guesses (`-g`, `--guesses`)
 - Option to allow guesses that aren't known words (`-n`, `--nonsense`)
 - Option to do guess-by-guess analysis, showing how many words you eliminate after each guess (`-a`, `--analysis`)
+- Option to show time taken after every guess (`-t`, `--timer`)
 - A bunch of unit tests to verify the logic
 - Beautiful command-line text interface (😜)
 
@@ -22,7 +23,7 @@ should exist on any desktop Unix system.
 Alternatively, the [Collins Scrabble Word Lists](https://boardgames.stackexchange.com/questions/38366/latest-collins-scrabble-words-list-in-text-file)
 seem to work nicely! CSW2019 contains 12,972 five-letter words, for example.
 
-Install with `pip3 install https://github.com/dlenski/lexeme/archive/main.zip`.
+Install with `pip3 install https://github.com/dlenski/lexeme/archive/main.zip`, then play the game with the command `lexeme`.
 
 ### Options
 
@@ -44,6 +45,7 @@ optional arguments:
                         number after each guess. If repeated (cheater mode!),
                         it will show you all the remaining possible words when
                         there are fewer than 100
+  -t, --timer           Show time taken after every guess.
 ```
 
 ## Screenshots

@@ -1,15 +1,15 @@
-import colorama
 from enum import Enum
+from colorama import Back, Style
 
 
 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 
 StatColors = Enum('StatColors', {
-    'Unknown': colorama.Style.RESET_ALL,
-    'Absent': colorama.Back.RED,
-    'WrongPosition': colorama.Back.YELLOW,
-    'RightPosition': colorama.Back.GREEN,
+    'Unknown': Style.RESET_ALL,
+    'Absent': Back.RED,
+    'WrongPosition': Back.YELLOW,
+    'RightPosition': Back.GREEN,
 })
 
 

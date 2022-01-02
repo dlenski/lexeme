@@ -1,22 +1,16 @@
 #!/usr/bin/python3
 
-from enum import Enum
 import argparse
-import colorama
 import os
 import random
+import time
+from colorama import Fore, Style
 
 from .algorithms import LETTERS, StatColors, stats_of_guess, update_stats_from_guess, remove_words_using_guess
 
-LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-
-StatColors = Enum('StatColors', {
-    'Unknown': colorama.Style.RESET_ALL,
-    'Absent': colorama.Back.RED,
-    'WrongPosition': colorama.Back.YELLOW,
-    'RightPosition': colorama.Back.GREEN,
-})
+EMPH = Fore.BLUE + Style.BRIGHT
+RESET = Style.RESET_ALL
 
 
 def colored_letters(stats):
@@ -29,11 +23,11 @@ def colored_letters(stats):
             last_stat = next_stat
         result += l
 
-    return result + colorama.Style.RESET_ALL
+    return result + RESET
 
 
 def colored_guess(guess, target):
-    return ''.join(s.value + l for s, l in zip(stats_of_guess(guess, target), guess)) + colorama.Style.RESET_ALL
+    return ''.join(s.value + l for s, l in zip(stats_of_guess(guess, target), guess)) + RESET
 
 
 def eligible_words(df, length):
@@ -57,6 +51,8 @@ def parse_args(args=None):
                    help='Allow nonsense guesses. (Default is to only allow known words.)')
     p.add_argument('-a', '--analyzer', action='count', default=0,
                    help='Analyze remaining possible words, and show their number after each guess. If repeated (cheater mode!), it will show you all the remaining possible words when there are fewer than 100')
+    p.add_argument('-t', '--timer', action='store_true',
+                   help='Show time taken after every guess.')
     p.add_argument('--test', help=argparse.SUPPRESS)
     args = p.parse_args(args)
     return p, args
@@ -75,44 +71,53 @@ def main(args=None):
         print(f"I've chosen the word {target} which you specified to test with!")
     else:
         target = random.choice(words)
-        print(f"I've chosen a {args.length}-letter word from {len(words)} possibilities.")
-    print(f"You have {args.guesses} guesses to guess it correctly.")
+        print(f"I've chosen a {EMPH}{args.length}{RESET}-letter word from {EMPH}{len(words)}{RESET} possibilities.")
+    print(f"You have {EMPH}{args.guesses}{RESET} guesses to guess it correctly.")
     if not args.nonsense:
         print(f"All your guesses must be words that I know!")
     print()
 
     guesses = []
-    stats_so_far = {l: StatColors.Unknown for l in LETTERS}
+    letter_stats = {l: StatColors.Unknown for l in LETTERS}
+    start_at = last_at = time.time()
     while len(guesses) < args.guesses:
         # Ask for next guess
-        print(f"Letters: {colored_letters(stats_so_far)}")
+        print(f"Letters: {colored_letters(letter_stats)}")
         if args.analyzer == 1 or (args.analyzer == 2 and len(narrow_words) >= 100):
-            print(f"There are {len(narrow_words)} possible words remaining.")
+            print(f"There are {EMPH}{len(narrow_words)}{RESET} possible words remaining.")
         elif args.analyzer >= 2:
-            print(f"There are {len(narrow_words)} possible words remaining: {', '.join(narrow_words)}")
+            print(f"There are {EMPH}{len(narrow_words)}{RESET} possible words remaining: {', '.join(narrow_words)}")
 
         try:
             while True:
                 guess = input("Your guess? ").strip().upper()
                 if len(guess) != args.length or any(c not in LETTERS for c in guess):
-                    print(f"Must be a word consisting of exactly {args.length} letters. Try again.")
+                    print(f"Must be a word consisting of exactly {EMPH}{args.length}{RESET} letters. Try again.")
                 elif not args.nonsense and guess not in words:
-                    print(f"Hmmm, I don't know the word {guess}. Try again.")
+                    print(f"Hmmm, I don't know the word {EMPH}{guess}{RESET}. Try again.")
                 else:
-                    break
+                    break  # Okay
         except (KeyboardInterrupt, EOFError):
             print()
             print("Interrupted, giving up...")
             break
 
         # Update stats with guess
-        update_stats_from_guess(stats_so_far, guess, target)
+        update_stats_from_guess(letter_stats, guess, target)
         guesses.append(guess)
+
+        now = time.time()
+        total = now - start_at
+        last = now - last_at
+        last_at = now
 
         # Show guesses so far
         print()
         for ii, g in enumerate(guesses, 1):
             print(f"Guess {ii}: {colored_guess(g, target)}")
+        if args.timer:
+            print(f"Last guess took {EMPH}{last:.2f}{RESET} seconds, {EMPH}{len(guesses)}{RESET} guess{'es' if len(guesses)!=1 else ''}"
+                  f" in {EMPH}{total:.2f}{RESET} s ({EMPH}{total/len(guesses):.2f} s/guess{RESET}).")
         print()
 
         if guess == target:
@@ -126,6 +131,7 @@ def main(args=None):
         print(f"Correct! {colored_guess(target, target)}")
     else:
         print(f"Sorry, the correct word was: {colored_guess(target, target)}")
+    print()
 
 
 if __name__ == '__main__':
