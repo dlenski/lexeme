@@ -1,18 +1,33 @@
 # What is this?
 
 Python program to play a word-guessing game like
-[Wordle](https://www.powerlanguage.co.uk/wordle).
+[Wordle](https://www.powerlanguage.co.uk/wordle), but…
 
-## Requirements
+- ***More addictive*** because you can play it over and over and over, not just once a day.
+- Option for varying the word length (`-l`, `--length`) or number of guesses (`-g`, `--guesses`)
+- Option to allow guesses that aren't known words (`-n`, `--nonsense`)
+- Option to do guess-by-guess analysis, showing how many words you eliminate after each guess (`-a`, `--analysis`)
+- A bunch of unit tests to verify the logic
+- Beautiful command-line text interface (😜)
 
-Python 3.x, the [`colorama` module](https://pypi.org/project/colorama),
-and a list of possible words (by default in `/usr/share/dict/words`).
+## Running it
 
-## Options
+### Installation
+
+Requires Python 3.x, the [`colorama` module](https://pypi.org/project/colorama)
+for printing colored letters, and a file containing a list of possible
+words. The default wordlist is in `/usr/share/dict/words`, which
+should exist on any desktop Unix system.
+
+Alternatively, the [Collins Scrabble Word Lists](https://boardgames.stackexchange.com/questions/38366/latest-collins-scrabble-words-list-in-text-file)
+seem to work nicely! CSW2019 contains 12,972 five-letter words, for example.
+
+Install with `pip3 install https://github.com/dlenski/lexeme/archive/main.zip`.
+
+### Options
 
 ```
-$ ./lexeme.py --help
-usage: lexeme.py [-h] [-d DICT] [-g GUESSES] [-l LENGTH] [-n]
+usage: lexeme [-h] [-d DICT] [-g GUESSES] [-l LENGTH] [-n] [-a]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -31,11 +46,6 @@ optional arguments:
                         there are fewer than 100
 ```
 
-## Word lists
-
-The [Collins Scrabble Word Lists](https://boardgames.stackexchange.com/questions/38366/latest-collins-scrabble-words-list-in-text-file)
-seem to work pretty well! CSW2019 contains 12,972 five-letter words.
-
 ## Screenshots
 
 Example of gameplay:
@@ -51,3 +61,9 @@ Example of cheater mode (`-aa`), show you all of the possible remaining words
 after each guess, as long as there are ≤100 of them:
 
 ![Analyzer](cheater.png)
+
+# Inspiration
+
+- [Wordle](https://www.powerlanguage.co.uk/wordle), of course
+- [@jsha](https://github.com/jsha)'s brilliant [Wordlyze](https://wordlyze.crud.net) ([source](https://github.com/jsha/learnrust/blob/master/wordle/src/main.rs) for the analyzer mode
+- [The subtle handling of repeated letters](https://twitter.com/moxfyre/status/1477320939520020484) inspired the unit tests
