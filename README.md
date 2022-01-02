@@ -25,6 +25,10 @@ optional arguments:
                         Length of word to guess
   -n, --nonsense        Allow nonsense guesses. (Default is to only allow
                         known words.)
+  -a, --analyzer        Analyze remaining possible words, and show their
+                        number after each guess. If repeated (cheater mode!),
+                        it will show you all the remaining possible words when
+                        there are fewer than 100
 ```
 
 ## Screenshots
@@ -32,3 +36,13 @@ optional arguments:
 Example of gameplay:
 
 ![Example](example.png)
+
+Example of analyzer mode (`-a`), showing you the _number_ of possible remaining words
+after each guess:
+
+![Analyzer](analyzer.png)
+
+Example of cheater mode (`-aa`), show you all of the possible remaining words
+after each guess, as long as there are ≤100 of them:
+
+![Analyzer](cheater.png)

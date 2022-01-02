@@ -56,6 +56,44 @@ def colored_guess(guess, target):
     return ''.join(s.value + l for s, l in zip(stats_of_guess(guess, target), guess)) + colorama.Style.RESET_ALL
 
 
+def remove_words_using_guess(guess, target, words):
+    stats = stats_of_guess(guess, target)
+    # print(stats)
+    for word in words:
+        wp_guess = {}
+        a_guess = {}
+        left_word = {}
+        for ii, (gl, wl, s) in enumerate(zip(guess, word, stats)):
+            # print(gl, wl, s)
+            if (gl == wl) and (s != StatColors.RightPosition):
+                break  # Guess and word share a letter which is NOT marked as RP in the guess
+            elif (gl != wl) and (s == StatColors.RightPosition):
+                break  # Guess and word differ in a letter which IS marked as RP in the guess
+            else:
+                # Count number of leftover (non-RP) letters in the word
+                if s != StatColors.RightPosition:
+                    left_word[wl] = left_word.get(wl, 0) + 1
+
+                # Count number of A/WP letters in the guess
+                if s == StatColors.WrongPosition:
+                    wp_guess[gl] = wp_guess.get(gl, 0) + 1
+                elif s == StatColors.Absent:
+                    a_guess[gl] = a_guess.get(gl, 0) + 1
+        else:
+            # Make sure there are enough of the WP letters from the guess in the word
+            for l, n in wp_guess.items():
+                if left_word.get(l, 0) < n:
+                    break  # Guess has more of these letters as WP than the word does
+            else:
+                # Make sure there aren't any of the A letters from the guess in the word, after discounting
+                # the WP letters from the guess.
+                for l, n in a_guess.items():
+                    if left_word.get(l, 0) > wp_guess.get(l, 0):
+                        break  # Guess has this letter as A, and word still has some left
+                else:
+                    yield word  # It's (still) a possible match
+
+
 def eligible_words(df, length):
     for line in df:
         word = line.strip()
@@ -86,6 +124,8 @@ def parse_args(args=None):
                    help='Length of word to guess')
     p.add_argument('-n', '--nonsense', action='store_true',
                    help='Allow nonsense guesses. (Default is to only allow known words.)')
+    p.add_argument('-a', '--analyzer', action='count', default=0,
+                   help='Analyze remaining possible words, and show their number after each guess. If repeated (cheater mode!), it will show you all the remaining possible words when there are fewer than 100')
     p.add_argument('--test', help=argparse.SUPPRESS)
     args = p.parse_args(args)
     return p, args
@@ -95,6 +135,8 @@ def main(args=None):
     p, args = parse_args(args)
 
     words = list(eligible_words(args.dict, args.length))
+    narrow_words = words
+
     if args.test:
         target = args.test.strip().upper()
         if target not in words:
@@ -113,6 +155,11 @@ def main(args=None):
     while len(guesses) < args.guesses:
         # Ask for next guess
         print(f"Letters: {colored_letters(stats_so_far)}")
+        if args.analyzer == 1 or (args.analyzer == 2 and len(narrow_words) >= 100):
+            print(f"There are {len(narrow_words)} possible words remaining.")
+        elif args.analyzer >= 2:
+            print(f"There are {len(narrow_words)} possible words remaining: {', '.join(narrow_words)}")
+
         try:
             while True:
                 guess = input("Your guess? ").strip().upper()
@@ -139,6 +186,10 @@ def main(args=None):
 
         if guess == target:
             break
+
+        # Narrow possible words from guess
+        if args.analyzer:
+            narrow_words = list(remove_words_using_guess(guess, target, narrow_words))
 
     if guesses and guesses[-1] == target:
         print(f"Correct! {colored_guess(target, target)}")
