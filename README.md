@@ -50,14 +50,11 @@ optional arguments:
 
 ## Screenshots
 
-Example of gameplay:
+Example of gameplay, with analyzer (`-a`) and timer (`-t) enabled,
+showing you the _number_ of possible remaining words, and the time taken
+for each guess:
 
 ![Example](example.png)
-
-Example of analyzer mode (`-a`), showing you the _number_ of possible remaining words
-after each guess:
-
-![Analyzer](analyzer.png)
 
 Example of cheater mode (`-aa`), show you all of the possible remaining words
 after each guess, as long as there are ≤100 of them:
