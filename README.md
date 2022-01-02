@@ -31,6 +31,11 @@ optional arguments:
                         there are fewer than 100
 ```
 
+## Word lists
+
+The [Collins Scrabble Word Lists](https://boardgames.stackexchange.com/questions/38366/latest-collins-scrabble-words-list-in-text-file)
+seem to work pretty well! CSW2019 contains 12,972 five-letter words.
+
 ## Screenshots
 
 Example of gameplay:

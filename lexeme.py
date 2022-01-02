@@ -98,8 +98,8 @@ def eligible_words(df, length):
     for line in df:
         word = line.strip()
         if len(word) == length:
-            # No non-letter or uppercase characters
-            if all(c == c.lower() and c.upper() in LETTERS for c in word):
+            # No non-letter characters, or mixed case (latter are likely proper nouns)
+            if all(c.upper() in LETTERS for c in word) and word in (word.upper(), word.lower()):
                 yield word.upper()
 
 
