@@ -35,6 +35,8 @@ def test_guess_stats():
     # Longer word
     yield _check_stats_of_guess, 'REVILE', 'SEVENS', 'ARRAAW'
     yield _check_stats_of_guess, 'EVENER', 'SEVENS', 'WWWWAA'
+    # This was a bug in Py->C conversion
+    yield _check_stats_of_guess, 'AAHED', 'ABEAM', 'RWAWA'
 
 
 def test_update_stats_from_guess():
