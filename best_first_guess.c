@@ -219,7 +219,7 @@ int eligible_words(FILE *f, int len, char ***output) {
         if (n >= bufsize) {
             //fprintf(stderr, "Realloc buf %d -> %d\n", bufsize, bufsize<<1);
             bufsize <<= 1;
-            buf = reallocarray(buf, bufsize, sizeof(*output));
+            buf = realloc(buf, bufsize * sizeof(*output));
             assert(buf != NULL);
             assert(buf[0] != NULL); assert(buf[n-1] != NULL); // I don't understand realloc
         }
