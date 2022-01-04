@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <time.h>
 
 #define Unknown 'U'
 #define Absent 'A'
@@ -258,6 +259,7 @@ int main(int argc, char **argv) {
     printf("guess,avg_words_left_after_first_guess\n");
 
     char stats[targetlen + 1];
+    time_t tstart = time(NULL);
 
     // Try each word as a guess...
     for (int ii=0; ii<nw; ii++) {
@@ -284,7 +286,8 @@ int main(int argc, char **argv) {
         printf("\"%s\",%g\n", guess, avg_left);
         fflush(stdout);
 
-        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %g possible words on average.\n", ii+1, nw, guess, avg_left);
+        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %g possible words on average. Solving at %g sec/guess\n",
+                ii+1, nw, guess, avg_left, (time(NULL) - tstart)/((double)(ii+1)));
     }
 
     return 0;
