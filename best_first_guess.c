@@ -53,7 +53,7 @@ char *stats_of_guess(int len, const char *guess, const char *target, char *stats
 
     for (int ii=0; ii < len; ii++) {
         char gl = guess[ii], tl = target[ii];
-        if (gl == target[ii]) {
+        if (gl == tl) {
             //fprintf(stderr, "%s %s %c -> RP\n", guess, target, gl);
             stats[ii] = RightPosition;
         } else {

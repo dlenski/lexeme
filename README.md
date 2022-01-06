@@ -17,13 +17,34 @@ Python program to play a word-guessing game like
 
 Requires Python 3.x, the [`colorama` module](https://pypi.org/project/colorama)
 for printing colored letters, and a file containing a list of possible
-words. The default wordlist is in `/usr/share/dict/words`, which
-should exist on any desktop Unix system.
-
-Alternatively, the [Collins Scrabble Word Lists](https://boardgames.stackexchange.com/questions/38366/latest-collins-scrabble-words-list-in-text-file)
-seem to work nicely! CSW2019 contains 12,972 five-letter words, for example.
+words.
 
 Install with `pip3 install https://github.com/dlenski/lexeme/archive/main.zip`, then play the game with the command `lexeme`.
+
+### Wordlists
+
+The default wordlist is in `/usr/share/dict/words`, which
+should exist on any desktop Unix system.
+
+#### Collins Scrabble Word Lists
+
+Alternatively, the [Collins Scrabble Word Lists](https://boardgames.stackexchange.com/questions/38366/latest-collins-scrabble-words-list-in-text-file)
+seem to work nicely! The 2019 edition (CSW2019) contains 12,972 five-letter words, for example.
+
+#### Wordle word lists
+
+The wordlists used by Wordle itself are a bit unusual: Wordle has a short
+list of words as possible answers (2315 words), but a much longer list of
+additional words as allowed guesses (2315 possible answers + 10,657 additional
+words, for a total of 12,972). They can be extracted with, say, these horrible
+cURL+Perl one-liners:
+
+```sh
+curl https://www.powerlanguage.co.uk/wordle/main.db1931a8.js |
+    perl -ne 'print join("\n", ($1=~/\w+/g)) . "\n" if /Aa=(\[[^]]+\])/' > wordle_possible_answers.txt
+curl https://www.powerlanguage.co.uk/wordle/main.db1931a8.js |
+    perl -ne 'print join("\n", ($1=~/\w+/g)) . "\n" if /La=(\[[^]]+\])/' | cat wordle_possible_answers.txt - > wordle_allowed_guesses.txt
+```
 
 ### Options
 
