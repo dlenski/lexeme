@@ -6,18 +6,18 @@ import random
 import time
 from colorama import Fore, Style
 
-from .algorithms import LETTERS, StatColors, stats_of_guess, update_stats_from_guess, remove_words_using_guess
+from .algorithms import LETTERS, ClueColors, clues_of_guess, update_clues_from_guess, remove_words_using_guess
 
 
 EMPH = Fore.BLUE + Style.BRIGHT
 RESET = Style.RESET_ALL
 
 
-def colored_letters(stats):
+def colored_letters(clues):
     result = ''
     last_stat = None
     for l in LETTERS:
-        next_stat = stats[l]
+        next_stat = clues[l]
         if next_stat != last_stat:
             result += next_stat.value
             last_stat = next_stat
@@ -27,7 +27,7 @@ def colored_letters(stats):
 
 
 def colored_guess(guess, target):
-    return ''.join(s.value + l for s, l in zip(stats_of_guess(guess, target), guess)) + RESET
+    return ''.join(s.value + l for s, l in zip(clues_of_guess(guess, target), guess)) + RESET
 
 
 def eligible_words(df, length):
@@ -78,11 +78,11 @@ def main(args=None):
     print()
 
     guesses = []
-    letter_stats = {l: StatColors.Unknown for l in LETTERS}
+    letter_clues = {l: ClueColors.Unknown for l in LETTERS}
     start_at = last_at = time.time()
     while len(guesses) < args.guesses:
         # Ask for next guess
-        print(f"Letters: {colored_letters(letter_stats)}")
+        print(f"Letters: {colored_letters(letter_clues)}")
         if args.analyzer == 1 or (args.analyzer == 2 and len(narrow_words) >= 100):
             print(f"There are {EMPH}{len(narrow_words)}{RESET} possible words remaining.")
         elif args.analyzer >= 2:
@@ -102,8 +102,8 @@ def main(args=None):
             print("Interrupted, giving up...")
             break
 
-        # Update stats with guess
-        update_stats_from_guess(letter_stats, guess, target)
+        # Update clues with guess
+        update_clues_from_guess(letter_clues, guess, target)
         guesses.append(guess)
 
         now = time.time()

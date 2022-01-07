@@ -7,7 +7,7 @@
  *
  *  Q: What is the optimal first guess? That is, what first guess will
  *     ON AVERAGE leave the fewest possible remaining words to guess?
- *  A: We need to run O(N^2) iterations of stats_of_guess, and O(N^3)
+ *  A: We need to run O(N^2) iterations of clues_of_guess, and O(N^3)
  *     iterations of is_word_possible_after_guess. Each is about
  *     O(L) in runtime. Memory requirements are trivial.
  *
@@ -44,8 +44,8 @@
 const char *LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const int N_LETTERS = 26;
 
-// C version of lexeme.algorithms.stats_of_guess
-char *stats_of_guess(int len, const char *guess, const char *target, char *stats) {
+// C version of lexeme.algorithms.clues_of_guess
+char *clues_of_guess(int len, const char *guess, const char *target, char *clues) {
     char leftovers[len];
     int nleft = 0;
 
@@ -55,9 +55,9 @@ char *stats_of_guess(int len, const char *guess, const char *target, char *stats
         char gl = guess[ii], tl = target[ii];
         if (gl == tl) {
             //fprintf(stderr, "%s %s %c -> RP\n", guess, target, gl);
-            stats[ii] = RightPosition;
+            clues[ii] = RightPosition;
         } else {
-            stats[ii] = Absent;
+            clues[ii] = Absent;
             leftovers[nleft++] = tl;
         }
     }
@@ -67,32 +67,32 @@ char *stats_of_guess(int len, const char *guess, const char *target, char *stats
             /* No change; already RP */
         } else if ((lo = memchr(leftovers, gl, nleft)) != NULL) {
             //fprintf(stderr, "%s %s %c -> WP\n", guess, target, gl);
-            stats[ii] = WrongPosition;
+            clues[ii] = WrongPosition;
             *lo = '\0'; // remove it
         } else {
             //fprintf(stderr, "%s %s %c -> A\n", guess, target, gl);
         }
     }
 
-    stats[len] = '\0';
-    return stats;
+    clues[len] = '\0';
+    return clues;
 }
 
-void test_guess_stats() {
-    char stats[7];
+void test_guess_clues() {
+    char clues[7];
 
-    assert(!strcmp(stats_of_guess(5, "SWEAT",  "FLEAS",  stats), "WARRA"));
-    assert(!strcmp(stats_of_guess(5, "REELS",  "REBUS",  stats), "RRAAR"));
-    assert(!strcmp(stats_of_guess(5, "ROARS",  "BEARS",  stats), "AARRR"));
-    assert(!strcmp(stats_of_guess(5, "ARIAS",  "PAPAS",  stats), "WAARR"));
-    assert(!strcmp(stats_of_guess(5, "ALAMO",  "ARIAS",  stats), "RAWAA"));
-    assert(!strcmp(stats_of_guess(6, "REVILE", "SEVENS", stats), "ARRAAW"));
-    assert(!strcmp(stats_of_guess(6, "EVENER", "SEVENS", stats), "WWWWAA"));
-    assert(!strcmp(stats_of_guess(5, "AAHED",  "ABEAM",  stats), "RWAWA")); // <-- Was a Py->C bug!
+    assert(!strcmp(clues_of_guess(5, "SWEAT",  "FLEAS",  clues), "WARRA"));
+    assert(!strcmp(clues_of_guess(5, "REELS",  "REBUS",  clues), "RRAAR"));
+    assert(!strcmp(clues_of_guess(5, "ROARS",  "BEARS",  clues), "AARRR"));
+    assert(!strcmp(clues_of_guess(5, "ARIAS",  "PAPAS",  clues), "WAARR"));
+    assert(!strcmp(clues_of_guess(5, "ALAMO",  "ARIAS",  clues), "RAWAA"));
+    assert(!strcmp(clues_of_guess(6, "REVILE", "SEVENS", clues), "ARRAAW"));
+    assert(!strcmp(clues_of_guess(6, "EVENER", "SEVENS", clues), "WWWWAA"));
+    assert(!strcmp(clues_of_guess(5, "AAHED",  "ABEAM",  clues), "RWAWA")); // <-- Was a Py->C bug!
 }
 
 // C version of lexeme.algorithms.is_word_possible_after_guess
-int is_word_possible_after_guess(int len, const char *guess, const char *word, const char *stats) {
+int is_word_possible_after_guess(int len, const char *guess, const char *word, const char *clues) {
     int wp_guess[N_LETTERS];
     int a_guess[N_LETTERS];
     int left_word[N_LETTERS];
@@ -102,7 +102,7 @@ int is_word_possible_after_guess(int len, const char *guess, const char *word, c
     bzero(left_word, N_LETTERS*sizeof(int));
 
     for (int ii=0; ii < len; ii++) {
-        char gl = guess[ii], wl = word[ii], s = stats[ii];
+        char gl = guess[ii], wl = word[ii], s = clues[ii];
         if ((gl == wl) && s != RightPosition) {
             //fprintf(stderr, "1) %d %c==%c but %c!=R\n", ii, gl, wl, s);
             return 0;   // Guess and word share a letter which is NOT marked as RP in the guess
@@ -142,26 +142,26 @@ int is_word_possible_after_guess(int len, const char *guess, const char *word, c
 }
 
 void test_word_possible_after_guess() {
-    char stats[7];
+    char clues[7];
 
-    assert(!strcmp(stats_of_guess       (6, "VXXXXX", "ADDUCE", stats), "AAAAAA"));
-    assert( is_word_possible_after_guess(6, "VXXXXX", "ADDUCE", stats));
-    assert( is_word_possible_after_guess(6, "VXXXXX", "DEDUCE", stats));
-    assert(!is_word_possible_after_guess(6, "VXXXXX", "ADVICE", stats));
+    assert(!strcmp(clues_of_guess       (6, "VXXXXX", "ADDUCE", clues), "AAAAAA"));
+    assert( is_word_possible_after_guess(6, "VXXXXX", "ADDUCE", clues));
+    assert( is_word_possible_after_guess(6, "VXXXXX", "DEDUCE", clues));
+    assert(!is_word_possible_after_guess(6, "VXXXXX", "ADVICE", clues));
 
-    assert(!strcmp(stats_of_guess       (6, "XXXXXV", "VIOLAS", stats), "AAAAAW"));
-    assert( is_word_possible_after_guess(6, "XXXXXV", "VESSEL", stats));
-    assert( is_word_possible_after_guess(6, "XXXXXV", "VIOLAS", stats));
-    assert( is_word_possible_after_guess(6, "XXXXXV", "VIOLIN", stats));
-    assert(!is_word_possible_after_guess(6, "XXXXXV", "ADDUCE", stats));
+    assert(!strcmp(clues_of_guess       (6, "XXXXXV", "VIOLAS", clues), "AAAAAW"));
+    assert( is_word_possible_after_guess(6, "XXXXXV", "VESSEL", clues));
+    assert( is_word_possible_after_guess(6, "XXXXXV", "VIOLAS", clues));
+    assert( is_word_possible_after_guess(6, "XXXXXV", "VIOLIN", clues));
+    assert(!is_word_possible_after_guess(6, "XXXXXV", "ADDUCE", clues));
 
-    assert(!strcmp(stats_of_guess       (6, "ADVICE", "EVENER", stats), "AAWAAW"));
-    assert( is_word_possible_after_guess(6, "ADVICE", "EVENER", stats));
-    assert( is_word_possible_after_guess(6, "ADVICE", "VESSEL", stats));
-    assert(!is_word_possible_after_guess(6, "ADVICE", "DEVILS", stats));
+    assert(!strcmp(clues_of_guess       (6, "ADVICE", "EVENER", clues), "AAWAAW"));
+    assert( is_word_possible_after_guess(6, "ADVICE", "EVENER", clues));
+    assert( is_word_possible_after_guess(6, "ADVICE", "VESSEL", clues));
+    assert(!is_word_possible_after_guess(6, "ADVICE", "DEVILS", clues));
 
-    assert(!strcmp(stats_of_guess       (5, "AAHED",  "ABEAM",  stats), "RWAWA")); // <-- Was a Py->C bug
-    assert( is_word_possible_after_guess(5, "AAHED",  "ABASE",  stats));
+    assert(!strcmp(clues_of_guess       (5, "AAHED",  "ABEAM",  clues), "RWAWA")); // <-- Was a Py->C bug
+    assert( is_word_possible_after_guess(5, "AAHED",  "ABASE",  clues));
 }
 
 // C version of lexeme.__main__.eligible_words
@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
     int targetlen = atoi(argv[2]);
 
     // Check sanity of algorithms
-    test_guess_stats();
+    test_guess_clues();
     test_word_possible_after_guess();
 
     // Load all the eligible words
@@ -258,7 +258,7 @@ int main(int argc, char **argv) {
     //printf("guess,target,words_left_after_first_guess\n");
     printf("guess,avg_words_left_after_first_guess\n");
 
-    char stats[targetlen + 1];
+    char clues[targetlen + 1];
     time_t tstart = time(NULL);
 
     // Try each word as a guess...
@@ -271,12 +271,12 @@ int main(int argc, char **argv) {
             const char *target = words[jj];
 
             // What clues do we get from that guess against each target?
-            stats_of_guess(targetlen, guess, target, stats);
+            clues_of_guess(targetlen, guess, target, clues);
 
             // How many of the word pool are still possible?
             for (int kk=0; kk<nw; kk++) {
                 const char *word = words[kk];
-                acc += is_word_possible_after_guess(targetlen, guess, word, stats);
+                acc += is_word_possible_after_guess(targetlen, guess, word, clues);
             }
             //printf("\"%s\",\"%s\",%d\n", guess, target, nleft);
         }

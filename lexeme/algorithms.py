@@ -5,7 +5,7 @@ from colorama import Back, Style
 LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 
-StatColors = Enum('StatColors', {
+ClueColors = Enum('ClueColors', {
     'Unknown': Style.RESET_ALL,
     'Absent': Back.RED,
     'WrongPosition': Back.YELLOW,
@@ -13,59 +13,59 @@ StatColors = Enum('StatColors', {
 })
 
 
-def stats_of_guess(guess, target):
-    stats = []
+def clues_of_guess(guess, target):
+    clues = []
     leftovers = []
 
     # Two-pass so that we don't overcount WrongPos.
     # https://twitter.com/moxfyre/status/1477321560927129604
     for gl, tl in zip(guess, target):
         if gl == tl:
-            stats.append(StatColors.RightPosition)
+            clues.append(ClueColors.RightPosition)
         else:
-            stats.append(StatColors.Absent)
+            clues.append(ClueColors.Absent)
             leftovers.append(tl)
     for ii, (gl, tl) in enumerate(zip(guess, target)):
         if gl == tl:
             pass  # Don't change
         elif gl in leftovers:
             leftovers.remove(gl)
-            stats[ii] = StatColors.WrongPosition
+            clues[ii] = ClueColors.WrongPosition
 
-    return stats
+    return clues
 
 
-def update_stats_from_guess(stats, guess, target):
+def update_clues_from_guess(clues, guess, target):
     for gl, tl in zip(guess, target):
         if gl == tl:
-            stats[gl] = StatColors.RightPosition
+            clues[gl] = ClueColors.RightPosition
         elif gl in target:
-            if stats[gl] in (StatColors.Unknown, StatColors.Absent):
-                stats[gl] = StatColors.WrongPosition
+            if clues[gl] in (ClueColors.Unknown, ClueColors.Absent):
+                clues[gl] = ClueColors.WrongPosition
         else:
-            stats[gl] = StatColors.Absent
+            clues[gl] = ClueColors.Absent
 
 
-def is_word_possible_after_guess(guess, word, stats):
+def is_word_possible_after_guess(guess, word, clues):
     wp_guess = {}
     a_guess = {}
     left_word = {}
 
-    for ii, (gl, wl, s) in enumerate(zip(guess, word, stats)):
+    for ii, (gl, wl, s) in enumerate(zip(guess, word, clues)):
         # print(gl, wl, s)
-        if (gl == wl) and (s != StatColors.RightPosition):
+        if (gl == wl) and (s != ClueColors.RightPosition):
             return False  # Guess and word share a letter which is NOT marked as RP in the guess
-        elif (gl != wl) and (s == StatColors.RightPosition):
+        elif (gl != wl) and (s == ClueColors.RightPosition):
             return False  # Guess and word differ in a letter which IS marked as RP in the guess
         else:
             # Count number of leftover (non-RP) letters in the word
-            if s != StatColors.RightPosition:
+            if s != ClueColors.RightPosition:
                 left_word[wl] = left_word.get(wl, 0) + 1
 
             # Count number of A/WP letters in the guess
-            if s == StatColors.WrongPosition:
+            if s == ClueColors.WrongPosition:
                 wp_guess[gl] = wp_guess.get(gl, 0) + 1
-            elif s == StatColors.Absent:
+            elif s == ClueColors.Absent:
                 a_guess[gl] = a_guess.get(gl, 0) + 1
 
     # Make sure there are enough of the WP letters from the guess in the word
@@ -83,5 +83,5 @@ def is_word_possible_after_guess(guess, word, stats):
 
 
 def remove_words_using_guess(guess, target, words):
-    stats = stats_of_guess(guess, target)
-    return (word for word in words if is_word_possible_after_guess(guess, word, stats))
+    clues = clues_of_guess(guess, target)
+    return (word for word in words if is_word_possible_after_guess(guess, word, clues))

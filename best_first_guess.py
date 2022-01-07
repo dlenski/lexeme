@@ -9,7 +9,7 @@ Assume all N words are equally likely as a target.
 
 Q: What is the optimal first guess? That is, what first guess will
    ON AVERAGE leave the fewest possible remaining words to guess?
-A: We need to run O(N^2) iterations of stats_of_guess, and O(N^3)
+A: We need to run O(N^2) iterations of clues_of_guess, and O(N^3)
    iterations of is_word_possible_after_guess. Each is about
    O(L) in runtime. Memory requirements are trivial.
 
@@ -22,7 +22,7 @@ usage: best_first_guess.py [wordlist.txt] [target_word_len] > results.csv
 '''
 
 from lexeme.__main__ import eligible_words
-from lexeme.algorithms import is_word_possible_after_guess, stats_of_guess
+from lexeme.algorithms import is_word_possible_after_guess, clues_of_guess
 import sys
 
 if len(sys.argv) == 3:
@@ -38,6 +38,6 @@ for guess in words:
     sys.stdout.flush()
     acc = 0
     for target in words:
-        stats = stats_of_guess(guess, target)
-        acc += sum(is_word_possible_after_guess(guess, w, stats) for w in words)
+        clues = clues_of_guess(guess, target)
+        acc += sum(is_word_possible_after_guess(guess, w, clues) for w in words)
     print(f'"{guess}",{acc / len(words)}')
