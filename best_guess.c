@@ -184,7 +184,7 @@ int eligible_words(FILE *f, int len, char ***output) {
             break;
 
         int ll = strlen(line);
-        assert(ll < MAX_LINE_LENGTH);
+        assert(ll < MAX_LINE_LENGTH - 1);
 
         // Trim leading space, then trailing space
         char *start = line, *end = line + ll;
