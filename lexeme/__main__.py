@@ -5,6 +5,10 @@ import os
 import random
 import time
 from colorama import Fore, Style
+try:
+    from unidecode import unidecode
+except:
+    unidecode = None
 
 from .algorithms import LETTERS, ClueColors, clues_of_guess, update_clues_from_guess, remove_words_using_guess
 
@@ -30,9 +34,18 @@ def colored_guess(guess, target):
     return ''.join(s.value + l for s, l in zip(clues_of_guess(guess, target), guess)) + RESET
 
 
-def eligible_words(df, length):
+def eligible_words(df, length, strip_diacritics=False):
+    if strip_diacritics and not unidecode:
+        raise NotImplementedError("unidecode module required for strip_diacritics")
     for line in df:
         word = line.strip()
+
+        # Need to do this before checking length, because unidecode can change it,
+        # as in unidecode('buß') -> 'buss'. I wish unidecode('König') -> 'koenig',
+        # but it doesn't currently do that.
+        if strip_diacritics:
+            word = unidecode(word)
+
         if len(word) == length:
             # No non-letter characters, or mixed case (latter are likely proper nouns)
             if all(c.upper() in LETTERS for c in word) and word in (word.upper(), word.lower()):
@@ -54,6 +67,9 @@ def parse_args(args=None):
     p.add_argument('-t', '--timer', action='store_true',
                    help='Show time taken after every guess.')
     p.add_argument('--test', help=argparse.SUPPRESS)
+    if unidecode:
+        p.add_argument('-D', '--strip-diacritics', action='store_true',
+                       help='EXPERIMENTAL: Strip diacritics from words (should allow playing with Spanish/French wordlists)')
     args = p.parse_args(args)
     return p, args
 
@@ -61,7 +77,7 @@ def parse_args(args=None):
 def main(args=None):
     p, args = parse_args(args)
 
-    words = list(eligible_words(args.dict, args.length))
+    words = list(eligible_words(args.dict, args.length, args.strip_diacritics))
     narrow_words = words
 
     if args.test:

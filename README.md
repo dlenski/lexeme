@@ -1,3 +1,8 @@
+# Lexeme
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Build Status](https://github.com/dlenski/lexeme/workflows/build_and_test/badge.svg)](https://github.com/dlenski/lexeme/actions/workflows/build_and_test.yml)
+
 # What is this?
 
 Python program to play a word-guessing game like
@@ -71,6 +76,9 @@ optional arguments:
                         it will show you all the remaining possible words when
                         there are fewer than 100
   -t, --timer           Show time taken after every guess.
+  -D, --strip-diacritics
+                        EXPERIMENTAL: Strip diacritics from words (should
+                        allow playing with Spanish/French wordlists)
 ```
 
 ## Screenshots

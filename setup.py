@@ -21,6 +21,7 @@ setup(
     license='GPL v3 or later',
     url="https://github.com/dlenski/lexeme",
     install_requires=open('requirements.txt').readlines(),
+    extras_require={'unidecode': ['unidecode']},
     packages=["lexeme"],
     entry_points={'console_scripts': ['lexeme=lexeme.__main__:main']},
     tests_require=open('requirements-test.txt').readlines(),
