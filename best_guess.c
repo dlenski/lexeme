@@ -234,7 +234,7 @@ int eligible_words(FILE *f, int len, char ***output) {
 int main(int argc, char **argv) {
     if (argc != 3 && argc != 4) {
         fprintf(stderr,
-                "usage: %s [wordlist] [wordlen]\n"
+                "usage: %1$s [wordlist] [wordlen]\n"
                 "       %1$s [targetlist] [wordlen] [guesslist]\n"
                 "\n"
                 "Use the first form when the list of possible target words and allowed guesses\n"
@@ -298,10 +298,10 @@ int main(int argc, char **argv) {
             // What clues do we get from that guess against each target?
             clues_of_guess(targetlen, guess, target, clues);
 
-            // How many of the targets are still possible?
+            // How many of the target words are still possible?
             for (int kk=0; kk<ntw; kk++) {
-                const char *word = words[kk];
-                if (is_word_possible_after_guess(targetlen, guess, word, clues))
+                const char *ptw = targets[kk];
+                if (is_word_possible_after_guess(targetlen, guess, ptw, clues))
                     count++;
             }
             acc += count;
@@ -315,8 +315,8 @@ int main(int argc, char **argv) {
         printf("\"%s\",%g,%d\n", guess, avg_left, worst_left);
         fflush(stdout);
 
-        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %g possible targets on average, %d at worst. Solving at %g sec/guess\n",
-                ii+1, nw, guess, avg_left, worst_left, (time(NULL) - tstart)/((double)(ii+1)));
+        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %g/%d possible targets on average, %d at worst. Solving at %g sec/guess\n",
+                ii+1, ngw, guess, avg_left, ntw, worst_left, (time(NULL) - tstart)/((double)(ii+1)));
     }
 
     return 0;
