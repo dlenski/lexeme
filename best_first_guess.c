@@ -62,8 +62,8 @@ char *clues_of_guess(int len, const char *guess, const char *target, char *clues
         }
     }
     for (int ii=0; ii < len; ii++) {
-        char gl = guess[ii], *lo;
-        if (gl == target[ii]) {
+        char gl = guess[ii], tl = target[ii], *lo;
+        if (gl == tl) {
             /* No change; already RP */
         } else if ((lo = memchr(leftovers, gl, nleft)) != NULL) {
             //fprintf(stderr, "%s %s %c -> WP\n", guess, target, gl);
@@ -178,16 +178,12 @@ int eligible_words(FILE *f, int len, char ***output) {
     char **buf = calloc(bufsize, sizeof(*output));
     assert(buf != NULL);
 
-    while (!feof(f)) {
+    for (;;) {
         //fprintf(stderr, "*** lastline: %s\n", line);
-        fgets(line, MAX_LINE_LENGTH, f);
+        if (!fgets(line, MAX_LINE_LENGTH, f))
+            break;
 
         int ll = strlen(line);
-        if (ll == 0) {
-            /* FIXME */
-            assert(feof(f));
-            break;
-        }
         assert(ll < MAX_LINE_LENGTH);
 
         // Trim leading space, then trailing space
