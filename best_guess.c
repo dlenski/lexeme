@@ -232,58 +232,91 @@ int eligible_words(FILE *f, int len, char ***output) {
 }
 
 int main(int argc, char **argv) {
-    if (argc != 3) {
-        fprintf(stderr, "usage: %s [wordlist] [wordlen]\n", argv[0]);
+    if (argc != 3 && argc != 4) {
+        fprintf(stderr,
+                "usage: %s [wordlist] [wordlen]\n"
+                "       %1$s [targetlist] [wordlen] [guesslist]\n"
+                "\n"
+                "Use the first form when the list of possible target words and allowed guesses\n"
+                "are one and the same.\n"
+                "\n"
+                "Use the second form when there are legal guesses that are not possible targets,\n"
+                "as when playing Wordle (which has this asymmetry even on the first guess), or\n"
+                "when some words have already been eliminated from the possible targets (by\n"
+                "prior guesses). The guesslist file should be a SUPERSET of the answerlist file.\n"
+                "\n"
+                "The wordlist files should have one word per line, with leading and trailing\n"
+                "space ignored. Words must either be all-uppercase [A-Z] or all-lowercase [a-z],\n"
+                "but not mixed-case, otherwise they will be ignored.\n",
+                argv[0]);
         exit(1);
     }
-    char *fn = argv[1];
+    int extra_guesses = (argc == 4);
+    char *targetfn = argv[1];
     int targetlen = atoi(argv[2]);
+    char *guessfn = extra_guesses ? argv[3] : NULL;
 
     // Check sanity of algorithms
     test_guess_clues();
     test_word_possible_after_guess();
 
     // Load all the eligible words
-    FILE *f = fopen(fn, "r");
+    char **targets = NULL, **guesses = NULL;
+    FILE *f = fopen(targetfn, "r");
     assert(f);
-    char **words = NULL;
-    int nw = eligible_words(f, targetlen, &words);
-    assert(nw);
+    int ntw = eligible_words(f, targetlen, &targets), ngw;
+    assert(ntw);
+    if (!extra_guesses) {
+        guesses = targets;
+        ngw = ntw;
+        fprintf(stderr, "Loaded list of %d target/guess words of length %d from \"%s\"\n", ntw, targetlen, targetfn);
+    } else {
+        f = fopen(guessfn, "r");
+        assert(f);
+        ngw = eligible_words(f, targetlen, &guesses);
+        assert(ngw);
+        fprintf(stderr, "Loaded list of %d target words of length %d from \"%s\"\n", ntw, targetlen, targetfn);
+        fprintf(stderr, "Loaded list of %d guess words of length %d from \"%s\"\n", ngw, targetlen, guessfn);
+    }
 
-    fprintf(stderr, "Loaded list of %d words of length %d from \"%s\"\n", nw, targetlen, fn);
     //printf("guess,target,words_left_after_first_guess\n");
-    printf("guess,avg_words_left_after_first_guess\n");
+    printf("guess,avg_targets_left_after_guess,max_targets_left_after_guess\n");
 
     char clues[targetlen + 1];
     time_t tstart = time(NULL);
 
-    // Try each word as a guess...
-    for (int ii=0; ii<nw; ii++) {
-        const char *guess = words[ii];
-        int acc = 0;
+    // Try each guess word...
+    for (int ii=0; ii<ngw; ii++) {
+        const char *guess = guesses[ii];
+        int acc = 0, worst_left = 0;
 
-        // Try each word as a target...
-        for (int jj=0; jj<nw; jj++) {
-            const char *target = words[jj];
+        // Try each target word...
+        for (int jj=0; jj<ntw; jj++) {
+            const char *target = targets[jj];
+            int count = 0;
 
             // What clues do we get from that guess against each target?
             clues_of_guess(targetlen, guess, target, clues);
 
-            // How many of the word pool are still possible?
-            for (int kk=0; kk<nw; kk++) {
+            // How many of the targets are still possible?
+            for (int kk=0; kk<ntw; kk++) {
                 const char *word = words[kk];
-                acc += is_word_possible_after_guess(targetlen, guess, word, clues);
+                if (is_word_possible_after_guess(targetlen, guess, word, clues))
+                    count++;
             }
+            acc += count;
+            if (count > worst_left)
+                worst_left = count;
             //printf("\"%s\",\"%s\",%d\n", guess, target, nleft);
         }
 
         // Output results.
-        double avg_left = ((double)acc) / ((double)nw);
-        printf("\"%s\",%g\n", guess, avg_left);
+        double avg_left = ((double)acc) / ((double)ntw);
+        printf("\"%s\",%g,%d\n", guess, avg_left, worst_left);
         fflush(stdout);
 
-        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %g possible words on average. Solving at %g sec/guess\n",
-                ii+1, nw, guess, avg_left, (time(NULL) - tstart)/((double)(ii+1)));
+        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %g possible targets on average, %d at worst. Solving at %g sec/guess\n",
+                ii+1, nw, guess, avg_left, worst_left, (time(NULL) - tstart)/((double)(ii+1)));
     }
 
     return 0;
