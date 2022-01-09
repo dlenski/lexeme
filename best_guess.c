@@ -126,7 +126,7 @@ int is_word_possible_after_guess(int len, const char *guess, const char *word, c
     // 2. Make sure there aren't any of the A letters from the guess in the word, after discounting
     //    the WP letters from the guess.
     for (int ii=0; ii < N_LETTERS; ii++) {
-        char c = ii+'A';
+        // char c = ii+'A';
         if (left_word[ii] < wp_guess[ii]) {
             // fprintf(stderr, "3) %d '%c' counts %d<%d\n", ii, c, left_word[ii], wp_guess[ii])
             return 0; // Guess has more of these letters as WP than the word has leftover
