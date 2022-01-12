@@ -28,13 +28,24 @@ Install with `pip3 install https://github.com/dlenski/lexeme/archive/main.zip`, 
 
 ### Wordlists
 
-The default wordlist is in `/usr/share/dict/words`, which
+The default wordlist is taken from `/usr/share/dict/words`, which
 should exist on any desktop Unix system.
 
 #### Collins Scrabble Word Lists
 
 The [Collins Scrabble Word Lists](https://boardgames.stackexchange.com/questions/38366/latest-collins-scrabble-words-list-in-text-file)
-seem to work nicely! The 2019 edition (CSW2019) contains 12,972 five-letter words.
+seem to work nicely! The 2019 edition (CSW2019) contains 12,972 five-letter words,
+which are precisely the same as [the valid guesses in Wordle itself](#wordle-word-lists).
+
+#### Word lists for French, Spanish, and German
+
+The project [lorenbrichter/Words](https://github.com/lorenbrichter/Words/tree/master/Words)
+contains high-quality French, Spanish, and German wordlists used for other
+word games.
+
+Diacritics have been removed (e.g. `français` → `francais` and `hablé` → `hable`),
+and as far as I can see, all of the possible inflected verb forms are included
+for French and Spanish. Should be very playable with Lexeme!
 
 #### Wordle word lists
 
