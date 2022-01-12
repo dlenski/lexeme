@@ -100,24 +100,30 @@ char *clues_of_guess(int len, const char *guess, const char *target, char *clues
  *    must_be[pos] & (1<<(letter-'A')) -> pos must be letter
  *  If a bit is set, must NOT be a particular letter at that position:
  *    must_not_be[pos] & (1<<(letter-'A')) -> pos must NOT be letter
- *  Must have at least this many of a given letter:
- *    have_at_least[let-'A'] -> must have at least this many of this letter
- *  Must have at most this many of a given letter:
- *    have_at_most[let-'A'] -> must have at most this many of this letter
- *
+ *  Must have at least/most this many of a given letter:
+ *    have[].at_least -> must have at least this many of .c
+ *    have[].at_most  -> must have at most  this many of .c
  *
  *  -> RightPosition clue is equivalent to 1 must_be,     1 have_at_least
  *  -> WrongPosition clue is equivalent to 1 must_not_be, 1 have_at_least, 1 have_at_most
  *  -> Absent        clue is equivalent to 1 must_not_be, 1 have_at_most
  *       (special case: set ALL positions to must_not_be if ALL clues for this letter are Absent)
  */
+
+struct _have { char c; uint8_t at_most; uint8_t at_least; };
 #define STRUCT_CLUEVEC(len, nlet, ...) \
-    struct __VA_ARGS__ { \
-        uint32_t must_be[len]; \
-        uint32_t must_not_be[len]; \
-        uint8_t have_at_least[nlet]; \
-        uint8_t have_at_most[nlet]; \
+    struct __VA_ARGS__ {               \
+        uint32_t must_be[len];         \
+        uint32_t must_not_be[len];     \
+        struct _have have[nlet];       \
     }
+
+int compar_have(const void *_a, const void *_b) {
+    const struct _have *a = _a, *b = _b;
+    return a->at_least != b->at_least
+        ? -(a->at_least - b->at_least)   // Sort higher at_least letters first
+        :  (a->at_most  - b->at_most );  // Tiebreaker: Sort lower at_most letters first
+}
 
 const void *cluevec_of_guess(int len, const char *guess, const char *target, void *cluevec) {
     STRUCT_CLUEVEC(len, N_LETTERS) *cv = cluevec;
@@ -127,8 +133,10 @@ const void *cluevec_of_guess(int len, const char *guess, const char *target, voi
 
     DEBUG_CLUES("guess=%s, target=%s composing cluevec:\n", guess, target);
     bzero(cv, sizeof(*cv));
-    for (int ii=0; ii < N_LETTERS; ii++)
-        cv->have_at_most[ii] = len;
+    for (int ii=0; ii < N_LETTERS; ii++) {
+        cv->have[ii].c = ii+'A';
+        cv->have[ii].at_most = len;
+    }
 
     // Pass 1: distinguish RP from WP/A
     for (int ii=0; ii < len; ii++) {
@@ -138,11 +146,11 @@ const void *cluevec_of_guess(int len, const char *guess, const char *target, voi
         if (gl == tl) {
             // RightPosition
             cv->must_be[ii] = gl_bit;
-            cv->have_at_least[gl_off]++;
+            cv->have[gl_off].at_least++;
         } else {
             // WrongPosition/Absent
             cv->must_not_be[ii] = gl_bit;
-            cv->have_at_most[gl_off]--;
+            cv->have[gl_off].at_most--;
             leftovers[ii] = tl; // Save for pass 2
         }
     }
@@ -155,12 +163,12 @@ const void *cluevec_of_guess(int len, const char *guess, const char *target, voi
             // RightPosition -> No further effect
         } else if ((lo = memchr(leftovers, gl, len)) != NULL) {
             // WrongPosition -> have_at_least[gl]++
-            cv->have_at_least[gl_off]++;
+            cv->have[gl_off].at_least++;
             // Remove this letter from further consideration
             *lo = '\0';
         } else {
             // Absent        -> have_at_most[gl] = have_at_least[gl]
-            if ((cv->have_at_most[gl_off] = cv->have_at_least[gl_off]) == 0) {
+            if ((cv->have[gl_off].at_most = cv->have[gl_off].at_least) == 0) {
                 // Zero occurrences! -> Add gl to must_not_be[*]
                 for (int jj=0; jj < len; jj++)
                     cv->must_not_be[jj] |= gl_bit;
@@ -170,10 +178,22 @@ const void *cluevec_of_guess(int len, const char *guess, const char *target, voi
                     __builtin_ffs(cv->must_be[ii]) ? __builtin_ffs(cv->must_be[ii]) - 1 + 'A' : 0);
         DEBUG_CLUES("must_not_be[%2d] = 0x%08x ('%c')\n", ii, cv->must_not_be[ii],
                     __builtin_ffs(cv->must_not_be[ii]) ? __builtin_ffs(cv->must_not_be[ii]) - 1 + 'A' : 0);
+        DEBUG_CLUES("have['%c'-'A'] = {.c='%c', .at_least=%d, .at_most=%d}\n",
+                    gl_off+'A', cv->have[gl_off].c, cv->have[gl_off].at_least, cv->have[gl_off].at_most);
     }
+
+    // Sort the have-at-least/have-at-most clues to put the most significant ones first,
+    // and discard the ones that give no additional value:
+    //   at_most == 0                    -> already set must_not_be for all positions
+    //   at_least == 0 && at_most == len -> always true
+    qsort(cv->have, N_LETTERS, sizeof(cv->have[0]), compar_have);
     for (int ii=0; ii < N_LETTERS; ii++) {
-        DEBUG_CLUES("have_at_least['%c'] = %2d, ", ii+'A', cv->have_at_least[ii]);
-        DEBUG_CLUES("have_at_most ['%c'] = %2d\n", ii+'A', cv->have_at_most[ii]);
+        struct _have *h = &cv->have[ii];
+        if ((h->at_most == 0) || (h->at_least == 0 && h->at_most == len)) {
+            h->c = '\0';
+            break;
+        }
+        DEBUG_CLUES("have[%d] = {.c='%c', .at_least=%d, .at_most=%d}\n", ii, h->c, h->at_least, h->at_most);
     }
 
     return cv;
@@ -256,8 +276,11 @@ inline int is_word_possible_after_cluevec(int len, const char *word, const void 
         count[wl_off]++;
     }
     for (int ii=0; ii < N_LETTERS; ii++) {
-        if (count[ii] < cv->have_at_least[ii]) return 0;  // Not enough of this letter
-        if (count[ii] > cv->have_at_most [ii]) return 0;  // Too much of this letter
+        const struct _have *h = &cv->have[ii];
+        if (h->c == '\0')
+            break;
+        if (count[h->c-'A'] < h->at_least) return 0;  // Not enough of this letter
+        if (count[h->c-'A'] > h->at_most ) return 0;  // Too much of this letter
     }
     return 1;
 }
@@ -283,6 +306,9 @@ void test_word_possible_after_guess() {
 
     assert(!strcmp(clues_of_guess       (5, "AAHED",  "ABEAM",  clues), "RWAWA")); // <-- Was a Py->C bug
     assert( is_word_possible_after_guess(5, "AAHED",  "ABASE",  clues));
+
+    assert(!strcmp(clues_of_guess       (5, "AAEHD",  "AAHED",  clues), "RRWWR"));
+    assert( is_word_possible_after_guess(5, "AAEHD",  "AAHED",  clues));
 }
 
 void test_word_possible_after_cluevec() {
@@ -300,6 +326,9 @@ void test_word_possible_after_cluevec() {
 
     cluevec_of_guess                      (5, "AAHED", "ABEAM", cluevec);
     assert( is_word_possible_after_cluevec(5, "ABEAM", cluevec));
+
+    cluevec_of_guess                      (5, "AAEHD", "AAHED", cluevec);
+    assert( is_word_possible_after_cluevec(5, "AAHED", cluevec));
 
     free(cluevec);
 }
