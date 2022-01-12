@@ -44,6 +44,13 @@
 const char *LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const int N_LETTERS = 26;
 
+#define DEBUG_STDERR(...) fprintf (stderr, __VA_ARGS__)
+#define DEBUG_NOTHING(...) do{}while(0)
+// Change any of these to DEBUG_STDERR(__VA_ARGS__) to enable, 0 to disable:
+#define DEBUG_CLUES(...)
+#define DEBUG_IS_WORD_POSSIBLE(...)
+#define DEBUG_ELIGIBLE_WORDS(...)
+
 // C version of lexeme.algorithms.clues_of_guess
 char *clues_of_guess(int len, const char *guess, const char *target, char *clues) {
     char leftovers[len];
@@ -54,7 +61,7 @@ char *clues_of_guess(int len, const char *guess, const char *target, char *clues
     for (int ii=0; ii < len; ii++) {
         char gl = guess[ii], tl = target[ii];
         if (gl == tl) {
-            //fprintf(stderr, "%s %s %c -> RP\n", guess, target, gl);
+            DEBUG_CLUES("%s %s %c -> RP\n", guess, target, gl);
             clues[ii] = RightPosition;
         } else {
             clues[ii] = Absent;
@@ -66,11 +73,11 @@ char *clues_of_guess(int len, const char *guess, const char *target, char *clues
         if (gl == tl) {
             /* No change; already RP */
         } else if ((lo = memchr(leftovers, gl, nleft)) != NULL) {
-            //fprintf(stderr, "%s %s %c -> WP\n", guess, target, gl);
+            DEBUG_CLUES("%s %s %c -> WP\n", guess, target, gl);
             clues[ii] = WrongPosition;
             *lo = '\0'; // remove it
         } else {
-            //fprintf(stderr, "%s %s %c -> A\n", guess, target, gl);
+            DEBUG_CLUES("%s %s %c -> A\n", guess, target, gl);
         }
     }
 
@@ -104,10 +111,10 @@ int is_word_possible_after_guess(int len, const char *guess, const char *word, c
     for (int ii=0; ii < len; ii++) {
         char gl = guess[ii], wl = word[ii], s = clues[ii];
         if ((gl == wl) && s != RightPosition) {
-            //fprintf(stderr, "1) %d %c==%c but %c!=R\n", ii, gl, wl, s);
+            DEBUG_IS_WORD_POSSIBLE("1) %d %c==%c but %c!=R\n", ii, gl, wl, s);
             return 0;   // Guess and word share a letter which is NOT marked as RP in the guess
         } else if ((gl != wl) && s == RightPosition) {
-            //fprintf(stderr, "2) %d %c!=%c but %c==R\n", ii, gl, wl, s);
+            DEBUG_IS_WORD_POSSIBLE("2) %d %c!=%c but %c==R\n", ii, gl, wl, s);
             return 0;   // Guess and word differ in a letter which IS marked as RP in the guess
         } else {
             // Count number of leftover (non-RP) letters in the word
@@ -128,11 +135,11 @@ int is_word_possible_after_guess(int len, const char *guess, const char *word, c
     for (int ii=0; ii < N_LETTERS; ii++) {
         // char c = ii+'A';
         if (left_word[ii] < wp_guess[ii]) {
-            // fprintf(stderr, "3) %d '%c' counts %d<%d\n", ii, c, left_word[ii], wp_guess[ii])
+            DEBUG_IS_WORD_POSSIBLE("3) %d '%c' counts %d<%d\n", ii, ii+'A', left_word[ii], wp_guess[ii]);
             return 0; // Guess has more of these letters as WP than the word has leftover
         }
         if (a_guess[ii] && (left_word[ii] > wp_guess[ii])) {
-            // fprintf(stderr, "4) %d '%c' counts (%d!=0 && %d>%d)\n", ii, c, a_guess[ii], left_word[ii], wp_guess[ii])
+            DEBUG_IS_WORD_POSSIBLE("4) %d '%c' counts (%d!=0 && %d>%d)\n", ii, ii+'A', a_guess[ii], left_word[ii], wp_guess[ii]);
             return 0; // Guess has this letter as A, and word still has some left
         }
     }
@@ -179,7 +186,7 @@ int eligible_words(FILE *f, int len, char ***output) {
     assert(buf != NULL);
 
     for (;;) {
-        //fprintf(stderr, "*** lastline: %s\n", line);
+        DEBUG_ELIGIBLE_WORDS("*** lastline: %s\n", line);
         if (!fgets(line, MAX_LINE_LENGTH, f))
             break;
 
@@ -214,13 +221,13 @@ int eligible_words(FILE *f, int len, char ***output) {
 
         // It's a word!
         if (n >= bufsize) {
-            //fprintf(stderr, "Realloc buf %d -> %d\n", bufsize, bufsize<<1);
+            DEBUG_ELIGIBLE_WORDS("Realloc buf %d -> %d\n", bufsize, bufsize<<1);
             bufsize <<= 1;
             buf = realloc(buf, bufsize * sizeof(*output));
             assert(buf != NULL);
             assert(buf[0] != NULL); assert(buf[n-1] != NULL); // I don't understand realloc
         }
-        //fprintf(stderr, "buf[%d] = \"%s\"\n", n, start);
+        DEBUG_ELIGIBLE_WORDS("buf[%d] = \"%s\"\n", n, start);
         buf[n++] = strdup(start);
 
     not_a_word:
