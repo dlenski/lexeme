@@ -49,16 +49,21 @@ for French and Spanish. Should be very playable with Lexeme!
 
 #### Wordle word lists
 
+UPDATE: _Wordle frequently updates its minified `.js` files, but the basic
+idea should stay the same: there are two arrays in the source, one of which
+contains all the answers and one of which contains all the other words
+allowed as guesses._
+
 The wordlists used by Wordle itself are a bit unusual: Wordle has a short
 list of words as possible answers (2,315 words), but a much longer list of
 additional words as allowed guesses (10,657 additional words). They can be
 extracted with, say, these horrible cURL+Perl one-liners:
 
 ```sh
-curl https://www.powerlanguage.co.uk/wordle/main.db1931a8.js |
-    perl -ne 'print join("\n", ($1=~/\w+/g)) . "\n" if /Aa=(\[[^]]+\])/' > wordle_possible_answers.txt
-curl https://www.powerlanguage.co.uk/wordle/main.db1931a8.js |
-    perl -ne 'print join("\n", ($1=~/\w+/g)) . "\n" if /La=(\[[^]]+\])/' | cat wordle_possible_answers.txt - > wordle_allowed_guesses.txt
+curl https://www.powerlanguage.co.uk/wordle/main.c1506a22.js |
+    perl -ne 'print join("\n", ($1=~/\w+/g)) . "\n" if /La=(\[[^]]+\])/' > wordle_possible_answers.txt
+curl https://www.powerlanguage.co.uk/wordle/main.c1506a22.js |
+    perl -ne 'print join("\n", ($1=~/\w+/g)) . "\n" if /Ta=(\[[^]]+\])/' | cat wordle_possible_answers.txt - > wordle_allowed_guesses.txt
 ```
 
 The combined 12,972 words allowed as guesses in Wordle **precisely
