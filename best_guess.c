@@ -54,31 +54,28 @@ const int N_LETTERS = 26;
 // C version of lexeme.algorithms.clues_of_guess
 char *clues_of_guess(int len, const char *guess, const char *target, char *clues) {
     char leftovers[len];
-    int nleft = 0;
-
-    bzero(leftovers, len);
 
     for (int ii=0; ii < len; ii++) {
         char gl = guess[ii], tl = target[ii];
-        if (gl == tl) {
-            DEBUG_CLUES("%s %s %c -> RP\n", guess, target, gl);
-            clues[ii] = RightPosition;
-        } else {
-            clues[ii] = Absent;
-            leftovers[nleft++] = tl;
-        }
+        leftovers[ii] = (gl == tl ? '\0' : tl);
     }
+
+    int cl = 0;
     for (int ii=0; ii < len; ii++) {
         char gl = guess[ii], tl = target[ii], *lo;
+        int c;
         if (gl == tl) {
-            /* No change; already RP */
-        } else if ((lo = memchr(leftovers, gl, nleft)) != NULL) {
+            DEBUG_CLUES("%s %s %c -> RP\n", guess, target, gl);
+            c = RightPosition;
+        } else if ((lo = memchr(leftovers, gl, len)) != NULL) {
             DEBUG_CLUES("%s %s %c -> WP\n", guess, target, gl);
-            clues[ii] = WrongPosition;
+            c = WrongPosition;
             *lo = '\0'; // remove it
         } else {
             DEBUG_CLUES("%s %s %c -> A\n", guess, target, gl);
+            c = Absent;
         }
+        clues[ii] = c;
     }
 
     clues[len] = '\0';
@@ -470,7 +467,6 @@ int main(int argc, char **argv) {
 #if USE_CLUEVEC
             // What clues do we get from that guess against each target?
             STRUCT_CLUEVEC(targetlen, N_LETTERS) cluevec;
-            bzero(&cluevec, sizeof(cluevec));
             cluevec_of_guess(targetlen, guess, target, &cluevec);
 #else
             char clues[targetlen];
@@ -504,5 +500,7 @@ int main(int argc, char **argv) {
                 ii+1, ngw, guess, avg_left, ntw, worst_left, (time(NULL) - tstart)/((double)(ii+1)));
     }
 
+    fprintf(stderr, "Crunched %d guesses in %ld seconds (%g guesses/second).\n",
+            ngw, time(NULL)-tstart, ((double)ngw)/((double)((time(NULL)-tstart) ?: 1)));
     return 0;
 }
