@@ -262,7 +262,7 @@ int is_word_possible_after_guess(int len, const char *guess, const char *word, c
     return 1;
 }
 
-inline int is_word_possible_after_cluevec(int len, const char *word, const void *cluevec) {
+static inline int is_word_possible_after_cluevec(int len, const char *word, const void *cluevec) {
     const STRUCT_CLUEVEC(len, N_LETTERS) *cv = cluevec;
 
     uint32_t count[N_LETTERS];
