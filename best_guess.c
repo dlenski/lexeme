@@ -210,7 +210,7 @@ void test_guess_clues() {
 }
 
 // C version of lexeme.algorithms.is_word_possible_after_guess
-int is_word_possible_after_guess(int len, const char *guess, const char *word, const char *clues) {
+inline static int is_word_possible_after_guess(int len, const char *guess, const char *word, const char *clues) {
     int wp_guess[N_LETTERS];
     int a_guess[N_LETTERS];
     int left_word[N_LETTERS];
@@ -476,14 +476,13 @@ int main(int argc, char **argv) {
             // How many of the target words are still possible?
             for (int kk=0; kk<ntw; kk++) {
                 const char *ptw = targets[kk];
-                if (
+                count +=
 #if USE_CLUEVEC
                     is_word_possible_after_cluevec(targetlen, ptw, &cluevec)
 #else
                     is_word_possible_after_guess(targetlen, guess, ptw, clues)
 #endif
-                    )
-                    count++;
+                    ;
             }
             acc += count;
             if (count > worst_left)
