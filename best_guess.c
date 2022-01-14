@@ -430,7 +430,9 @@ int main(int argc, char **argv) {
     // Check sanity of algorithms
     test_guess_clues();
     test_word_possible_after_guess();
+#if USE_CLUEVEC
     test_word_possible_after_cluevec();
+#endif
 
     // Load all the eligible words
     char **targets = NULL, **guesses = NULL;
