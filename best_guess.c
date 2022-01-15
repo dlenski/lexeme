@@ -325,7 +325,7 @@ int main(int argc, char **argv) {
     }
 
     //printf("guess,target,words_left_after_first_guess\n");
-    printf("guess,avg_targets_left_after_guess,max_targets_left_after_guess,n_possible_cluniques_after_guess\n");
+    printf("guess,avg_targets_left_after_guess,median_targets_left_after_guess,max_targets_left_after_guess,n_possible_cluniques_after_guess\n");
 
     int n_cluniques = ipow(3, targetlen);
     char clues[targetlen + 1];
@@ -356,17 +356,26 @@ int main(int argc, char **argv) {
         // the self-same number of target words as remaining possibilities if we guessed any of them.
         // Thus, to calculate the average number of remaining words, we accumulate the square.
         // ("N target words, each of which would leave N remaining words if we made this guess")
-        int nc = 0, acc = 0;
-        for (nc=0; nc<n_cluniques && cluniques[nc]; nc++)
-            acc += cluniques[nc] * cluniques[nc];
+        int nc = 0, acc = 0, acc2 = 0, ntw50 = (ntw / 2);
+        double pct50 = 0;
+        for (nc=0; nc<n_cluniques && cluniques[nc]; nc++) {
+            int bucket = cluniques[nc];  // How many targets in this "clunique" category
+            if ((acc < ntw50) && (acc + bucket >= ntw50)) {
+                int last_bucket = nc > 0 ? cluniques[nc - 1] : 0;
+                double weight = (ntw50 - acc)/((double)bucket);
+                pct50 = bucket * weight + last_bucket * (1.0-weight);
+            }
+            acc += bucket;
+            acc2 += bucket * bucket;
+        }
 
         // Output results.
-        double avg_left = ((double)acc) / ((double)ntw);
-        printf("\"%s\",%g,%d,%d\n", guess, avg_left, worst_left, nc);
+        double avg_left = ((double)acc2) / ((double)ntw);
+        printf("\"%s\",%g,%g,%d,%d\n", guess, avg_left, pct50, worst_left, nc);
         fflush(stdout);
 
-        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %g/%d possible targets on average, %d at worst. Populates %d cluniques.\n",
-                ii+1, ngw, guess, avg_left, ntw, worst_left, nc);
+        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %g/%d possible targets on average, %g median, %d at worst. Populates %d cluniques.\n",
+                ii+1, ngw, guess, avg_left, ntw, pct50, worst_left, nc);
     }
 
     fprintf(stderr, "Crunched %d guesses in %ld seconds (%ld inner loops/second).\n",
