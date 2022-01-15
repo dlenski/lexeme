@@ -318,7 +318,7 @@ inline static int is_word_possible_after_guess(int len, const char *guess, const
     return 1;
 }
 
-inline int is_word_possible_after_cluevec(int len, const char *word, const void *cluevec) {
+static inline int is_word_possible_after_cluevec(int len, const char *word, const void *cluevec) {
     const STRUCT_CLUEVEC(len, N_LETTERS) *cv = cluevec;
 
     uint32_t count[N_LETTERS];
@@ -501,7 +501,9 @@ int main(int argc, char **argv) {
     // Check sanity of algorithms
     test_guess_clues();
     test_word_possible_after_guess();
+#if USE_CLUEVEC
     test_word_possible_after_cluevec();
+#endif
 
     // Load all the eligible words
     char **targets = NULL, **guesses = NULL;
