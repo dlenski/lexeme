@@ -325,7 +325,7 @@ int main(int argc, char **argv) {
     }
 
     //printf("guess,target,words_left_after_first_guess\n");
-    printf("guess,max_targets_left_after_guess\n");
+    printf("guess,avg_targets_left_after_guess,max_targets_left_after_guess,n_possible_cluniques_after_guess\n");
 
     int n_cluniques = ipow(3, targetlen);
     char clues[targetlen + 1];
@@ -352,15 +352,24 @@ int main(int argc, char **argv) {
         qsort(cluniques, n_cluniques, sizeof(int), comp_int_rev);
         int worst_left = cluniques[0];
 
+        // Each "clunique" category contains a certain number of target words. Each of those would leave
+        // the self-same number of target words as remaining possibilities if we guessed any of them.
+        // Thus, to calculate the average number of remaining words, we accumulate the square.
+        // ("N target words, each of which would leave N remaining words if we made this guess")
+        int nc = 0, acc = 0;
+        for (nc=0; nc<n_cluniques && cluniques[nc]; nc++)
+            acc += cluniques[nc] * cluniques[nc];
+
         // Output results.
-        printf("\"%s\",%d\n", guess, worst_left);
+        double avg_left = ((double)acc) / ((double)ntw);
+        printf("\"%s\",%g,%d,%d\n", guess, avg_left, worst_left, nc);
         fflush(stdout);
 
-        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %d/%d possible targets at worst.\n",
-                ii+1, ngw, guess, worst_left, ntw);
+        fprintf(stderr, "(%d/%d) First guess of \"%s\" leaves %g/%d possible targets on average, %d at worst. Populates %d cluniques.\n",
+                ii+1, ngw, guess, avg_left, ntw, worst_left, nc);
     }
 
-    fprintf(stderr, "Crunched %d guesses in %ld seconds (%g guesses/second).\n",
-            ngw, time(NULL)-tstart, ((double)ngw)/((double)((time(NULL)-tstart) ?: 1)));
+    fprintf(stderr, "Crunched %d guesses in %ld seconds (%ld inner loops/second).\n",
+            ngw, time(NULL)-tstart, (ngw*ntw)/((time(NULL)-tstart) ?: 1));
     return 0;
 }
