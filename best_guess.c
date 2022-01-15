@@ -1,15 +1,57 @@
 /*
- *  Wordle/Lexeme best-first-guess solver
+ *  Copyright © 2022 Daniel Lenski <dlenski@gmail.com>
+ *  Licensed under GPLv3.
+ *
+ *
+ *  Wordle/Lexeme best-next-guess solver
  *  =====================================
  *
- *  Start with a dictionary containing N eligible words of length L.
- *  Assume all N words are equally likely as a target.
+ *  Start with a dictionary containing N legal guess words of length
+ *  L. Assume some subset of those words (M<=N) are equally likely as
+ *  a target; M=N for the first guess of a game with no other
+ *  additional information, but M<N if some words have already been
+ *  ruled out by prior guesses.
  *
- *  Q: What is the optimal first guess? That is, what first guess will
- *     ON AVERAGE leave the fewest possible remaining words to guess?
- *  A: We need to run O(N^2) iterations of clues_of_guess, and O(N^3)
- *     iterations of is_word_possible_after_guess. Each is about
- *     O(L) in runtime. Memory requirements are trivial.
+ *  Q: What is the optimal next guess? That is, what next guess will
+ *     leave the fewest possible remaining words to guess in the worst
+ *     case? (Average case... median case... Xth percentile?)
+ *
+ *  A: There are (3^L)-L distinct clue patterns, because each position
+ *     in the word gets 3 possible clues, and all combinations are in
+ *     theory possible EXCEPT that it's not possible to have (L-1)
+ *     RightPosition clues and 1 WrongPosition clue. I call those
+ *     distinct clue categories "cluniques". We can easily number
+ *     these 0..(3^L-1), ignoring the L impossible cases for
+ *     simplicity.
+ *
+ *     If the clues resulting from a specific guess against a specific
+ *     target fall in clue category C, then the remaining possible
+ *     words after that guess are in fact ALL OF THE TARGETS WHICH
+ *     RESULT IN THE SAME CLUE CATEGORY.
+ *
+ *     So, to solve this, we iterate over the N possible guesses. For
+ *     each guess, we run M iterations of clues_of_guess, one for each
+ *     target. Each of those yields a clue category C. We simply count
+ *     the number of target words that fall into each clue category
+ *     into an array. Then, find whichever clue category had the
+ *     largest count, and that count gives the worst-case number of
+ *     targets remaining after this guess.
+ *
+ *     Do that for all N guesses, and record the results, and you've
+ *     found the worst guess, with N*M iterations of clues_of_guess.
+ *
+ *     Calculating the average, or the median, or the full
+ *     distribution of the number of remaining possible targets after
+ *     a guess, turns out to be not much harder at all. See code
+ *     below.
+ *
+ *  Original (very suboptimal) answer...
+ *     We need to run (N*M) iterations of clues_of_guess, and (N*M^2)
+ *     iterations of is_word_possible_after_guess. Each of those is
+ *     about O(L) in runtime. Basically, we sum up the number of
+ *     possible remaining targets after each (guess, target) combo,
+ *     and then sum for the worst/maximum and average number over
+ *     each guess.
  *
  *     Python is too damn slow, can't multithread itself out of a
  *     CPU-bound problem due to GIL, and would still be too slow if
@@ -18,12 +60,20 @@
  *  usage: best_first_guess [wordlist.txt] [target_word_len] > results.csv
  *   e.g.: best_first_guess /usr/share/dict/american-english 5 > results.csv
  *
- *     (That takes about 2 hours to run on one i7-8665U core
- *     at 1.9 GHz...)
+ *     The new O(N*M) version takes about 0.9 seconds to run on this
+ *     dictionary (4,595 5-letter words) on one i7-8665U core at 1.9
+ *     GHz.
+ *
+ *     The original O(N*M^2) version took about half an hour to run
+ *     this, even after some grinding and complex optimizations and
+ *     tuning in terms of how to store the words and the guesses. It
+ *     was down to about 30 CPU cycles per evaluation of
+ *     is_word_possible_after_guess, and clearly hitting a brick wall.
  *
  *  FIXME: This is embarrassingly parallelizable. With M CPU cores,
  *  just kick off M threads, have each run one possible guess, and
- *  gather the results.
+ *  gather the results. (If we want it to run even faster than it
+ *  already is!)
  *
  */
 
