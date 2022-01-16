@@ -418,9 +418,21 @@ int main(int argc, char **argv) {
         for (nc=0; nc<n_cluniques && cluniques[nc]; nc++) {
             int bucket = cluniques[nc];  // How many targets in this "clunique" category
             if ((acc < ntw50) && (acc + bucket >= ntw50)) {
-                int last_bucket = nc > 0 ? cluniques[nc - 1] : 0;
-                double weight = (ntw50 - acc)/((double)bucket);
-                pct50 = bucket * weight + last_bucket * (1.0-weight);
+                if (nc == 0) {
+                    // If >=50% of words are in the first/worst "clunique", p50 is that population.
+                    // For example, if 60/100 targets fall into the worst clunique, p50 = 60, since
+                    // for 50% of the targets this guess leaves 60 remaining possibilities, and for
+                    // 50% of them it leaves <= 60.
+                    pct50 = bucket;
+                } else {
+                    // Otherwise, p50 is a weighted average of the population of 2 "cluniques", one
+                    // of which is just before we count 50% of the total targets, and one of which
+                    // is at or after this point. If counting one "clunique" causes us to reach
+                    // exactly 50% of the total, then its weight is 1.0.
+                    int last_bucket = cluniques[nc - 1];
+                    double weight = (ntw50 - acc)/((double)bucket);
+                    pct50 = bucket * weight + last_bucket * (1.0-weight);
+                }
             }
             acc += bucket;
             acc2 += bucket * bucket;
