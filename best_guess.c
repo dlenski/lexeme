@@ -249,7 +249,7 @@ int eligible_words(FILE *f, int len, char ***output) {
     char line[MAX_LINE_LENGTH]; line[0] = 0;
 
     int bufsize = 256, n = 0;
-    char **buf = calloc(bufsize, sizeof(*output));
+    char **buf = calloc(bufsize, sizeof(**output));
     assert(buf != NULL);
 
     for (;;) {
@@ -290,7 +290,7 @@ int eligible_words(FILE *f, int len, char ***output) {
         if (n >= bufsize) {
             DEBUG_ELIGIBLE_WORDS("Realloc buf %d -> %d\n", bufsize, bufsize<<1);
             bufsize <<= 1;
-            buf = realloc(buf, bufsize * sizeof(*output));
+            buf = realloc(buf, bufsize * sizeof(**output));
             assert(buf != NULL);
             assert(buf[0] != NULL); assert(buf[n-1] != NULL); // I don't understand realloc
         }
