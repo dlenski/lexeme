@@ -71,6 +71,8 @@ def parse_args(args=None):
         p.add_argument('-D', '--strip-diacritics', action='store_true',
                        help='EXPERIMENTAL: Strip diacritics from words (should allow playing with Spanish/French wordlists)')
     args = p.parse_args(args)
+    if not unidecode:
+        args.strip_diacritics = False
     return p, args
 
 
