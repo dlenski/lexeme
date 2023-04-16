@@ -77,10 +77,12 @@
  *
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <inttypes.h>
 #include <assert.h>
 #include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
@@ -100,10 +102,10 @@ const int N_LETTERS = 26;
 #define DEBUG_STDERR(...) fprintf (stderr, __VA_ARGS__)
 #define DEBUG_NOTHING(...) do{}while(0)
 
-// Change any of these to DEBUG_STDERR(__VA_ARGS__) to enable, 0 to disable:
-#define DEBUG_CLUES(...)
-#define DEBUG_IS_WORD_POSSIBLE(...)
-#define DEBUG_ELIGIBLE_WORDS(...)
+// Change any of these to DEBUG_STDERR to enable, DEBUG_NOTHIN to disable:
+#define DEBUG_CLUES DEBUG_NOTHING
+#define DEBUG_IS_WORD_POSSIBLE DEBUG_NOTHING
+#define DEBUG_ELIGIBLE_WORDS DEBUG_NOTHING
 
 /***************************************************************************/
 
@@ -171,7 +173,8 @@ inline static int is_word_possible_after_guess(int len, const char *guess, const
     bzero(left_word, N_LETTERS*sizeof(int));
 
     for (int ii=0; ii < len; ii++) {
-        char gl = guess[ii], wl = word[ii], gl_off = gl-'A', wl_off = wl-'A', s = clues[ii];
+        char gl = guess[ii], wl = word[ii], s = clues[ii];
+        int gl_off = gl-'A', wl_off = wl-'A';
         if ((gl == wl) && s != RightPosition) {
             DEBUG_IS_WORD_POSSIBLE("1) %d %c==%c but %c!=R\n", ii, gl, wl, s);
             return 0;   // Guess and word share a letter which is NOT marked as RP in the guess
@@ -274,7 +277,7 @@ int eligible_words(FILE *f, int len, char ***output) {
 
         // Make uppercase, count uppercase/lowercase
         int gotlower = 0, gotupper = 0;
-        for (char *p = start; *p; *p++) {
+        for (char *p = start; *p; p++) {
             if (*p >= 'a' && *p <= 'z') {
                 gotlower++;
                 *p = toupper(*p);
@@ -295,7 +298,9 @@ int eligible_words(FILE *f, int len, char ***output) {
             assert(buf[0] != NULL); assert(buf[n-1] != NULL); // I don't understand realloc
         }
         DEBUG_ELIGIBLE_WORDS("buf[%d] = \"%s\"\n", n, start);
-        buf[n++] = strdup(start);
+        char *save = strndup(start, len);
+        assert(save);
+        buf[n++] = save;
 
     not_a_word:
         continue;
@@ -385,7 +390,6 @@ int main(int argc, char **argv) {
     int n_cluniques = ipow(3, targetlen);
     int n_possible_cluniques = n_cluniques - targetlen;
 
-    char clues[targetlen + 1];
     time_t tstart = time(NULL);
 
     // Try each guess word...
@@ -400,7 +404,7 @@ int main(int argc, char **argv) {
             int clunique;
 
             // Figure out the clues, and the "clunique" category of that guess+target combo
-            char clues[targetlen];
+            char clues[targetlen+1];
             clues_of_guess(targetlen, guess, target, clues, &clunique);
             cluniques[clunique]++;
         }
