@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "lexeme"
+version = "0.1"
+description = "Play and analyze a word-guessing game like Wordle"
+authors = ["Daniel Lenski <dlenski@gmail.com>"]
+readme = "README.md"
+license = "GPL v3 or later"
+classifiers = [
+    "Environment :: Console",
+    "Topic :: Games/Entertainment :: Puzzle Games",
+    "Operating System :: POSIX",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+]
+
+[project.urls]
+Homepage = "https://github.com/dlenski/lexeme"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+colorama = "*"
+unidecode = { version = "*", optional = true }
+
+[tool.poetry.scripts]
+lexeme = "lexeme.__main__:main"
+
+[tool.poetry.group.test.dependencies]
+nose2 = "*"
+coverage = "*"
+unidecode = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
